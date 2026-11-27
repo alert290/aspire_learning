@@ -1,0 +1,24 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <span class="text-muted small">Учебный проект .NET Aspire + Blazor</span>
+            <a href="about">Как это устроено →</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Произошла непредвиденная ошибка.
+    <a href="." class="reload">Перезагрузить</a>
+    <span class="dismiss">🗙</span>
+</div>

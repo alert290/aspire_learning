@@ -1,0 +1,98 @@
+﻿@page "/"
+@inject MenuApiClient MenuApi
+@inject CartState Cart
+@inject ILogger<Home> Logger
+
+<PageTitle>Меню · CoffeeShop</PageTitle>
+
+<div class="page-header">
+    <h1>Меню</h1>
+    <button class="btn btn-outline-coffee btn-sm" @onclick="ReloadAsync" disabled="@loading">
+        ↻ Обновить меню
+    </button>
+</div>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">
+        <strong>Меню недоступно.</strong> @error
+        <div class="small mt-1">Проверь в дашборде Aspire, что ресурсы <code>menuapi</code>, <code>postgres</code> и <code>cache</code> в состоянии Running.</div>
+    </div>
+}
+else if (Menu is null)
+{
+    <p class="text-muted">Загружаем меню…</p>
+}
+else
+{
+    @foreach (var category in Menu.Items.GroupBy(i => i.Category))
+    {
+        <h2 class="category-title">@category.Key</h2>
+        <div class="menu-grid">
+            @foreach (var item in category)
+            {
+                var inCart = Cart.Lines.FirstOrDefault(l => l.Item.Id == item.Id)?.Quantity ?? 0;
+                <div class="menu-card">
+                    <div class="menu-emoji" aria-hidden="true">@item.Emoji</div>
+                    <div class="menu-body">
+                        <h3>@item.Name</h3>
+                        <p>@item.Description</p>
+                    </div>
+                    <div class="menu-footer">
+                        <span class="price">@item.Price.ToString("N0") ₽</span>
+                        <button class="btn btn-coffee btn-sm" @onclick="() => Cart.Add(item)">
+                            @(inCart > 0 ? $"В корзине: {inCart} · ещё" : "В корзину")
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Подсказка "под капотом": видно балансировку между репликами и работу кэша. *@
+    <div class="aspire-hint">
+        <strong>Под капотом:</strong> меню отдала реплика <code>@(Menu.ServedBy ?? "?")</code>,
+        данные @(Menu.FromCache ? "взяты из кэша Redis" : "прочитаны из PostgreSQL и положены в кэш Redis на 60 с").
+        Подряд идущие запросы обычно попадают в одну и ту же реплику: прокси Aspire распределяет
+        TCP-соединения, а HttpClient переиспользует открытое соединение (подробнее — в уроке 1).
+    </div>
+}
+
+@code {
+    // [PersistentState] (.NET 10): значение, полученное при серверном пререндеринге,
+    // передаётся в интерактивную фазу — без него OnInitializedAsync сходил бы в API дважды.
+    [PersistentState]
+    public MenuSnapshot? Menu { get; set; }
+
+    private string? error;
+    private bool loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Menu is null)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private Task ReloadAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            Menu = await MenuApi.GetMenuAsync();
+        }
+        catch (Exception ex) // сеть, таймаут, 5xx после всех ретраев…
+        {
+            Logger.LogWarning(ex, "Не удалось загрузить меню");
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

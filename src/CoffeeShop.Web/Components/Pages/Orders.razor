@@ -1,0 +1,108 @@
+@page "/orders"
+@implements IDisposable
+@inject OrdersApiClient OrdersApi
+@inject ILogger<Orders> Logger
+
+<PageTitle>Заказы · CoffeeShop</PageTitle>
+
+<h1>Последние заказы</h1>
+
+@if (error is not null)
+{
+    <div class="alert alert-warning">@error</div>
+}
+
+@if (orders is null)
+{
+    <p class="text-muted">Загружаем…</p>
+}
+else if (orders.Count == 0)
+{
+    <p class="text-muted">Заказов пока нет. <a href="">Оформите первый!</a></p>
+}
+else
+{
+    <table class="table align-middle orders-table">
+        <thead>
+            <tr>
+                <th>Время</th>
+                <th>Гость</th>
+                <th>Состав</th>
+                <th class="text-end">Сумма</th>
+                <th>Статус</th>
+                <th>Бариста</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in orders)
+            {
+                <tr>
+                    <td><a href="orders/@o.Id">@o.CreatedAt.ToLocalTime().ToString("HH:mm:ss")</a></td>
+                    <td>@o.CustomerName</td>
+                    <td class="small">@string.Join(", ", o.Lines.Select(l => $"{l.ItemName} × {l.Quantity}"))</td>
+                    <td class="text-end">@o.Total.ToString("N0") ₽</td>
+                    <td><StatusBadge Status="o.Status" /></td>
+                    <td class="small"><code>@(o.PreparedBy ?? "—")</code></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="aspire-hint">
+    <strong>Попробуй:</strong> в дашборде Aspire у ресурса <code>ordersapi</code> есть команда
+    «Час пик: 5 заказов». Запусти её и смотри, как две реплики <code>barista</code> делят заказы между собой
+    (колонка «Бариста»). Список обновляется каждые 2 секунды.
+</div>
+
+@code {
+    private IReadOnlyList<OrderDto>? orders;
+    private string? error;
+    private readonly CancellationTokenSource cts = new();
+
+    protected override Task OnInitializedAsync() => RefreshAsync();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _ = PollAsync();
+        }
+    }
+
+    private async Task PollAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await RefreshAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            orders = await OrdersApi.GetRecentOrdersAsync(ct: cts.Token);
+            error = null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "Не удалось загрузить заказы");
+            error = "Сервис заказов временно недоступен.";
+        }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
+    }
+}

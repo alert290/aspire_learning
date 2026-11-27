@@ -1,0 +1,132 @@
+@page "/orders/{Id:guid}"
+@implements IDisposable
+@inject OrdersApiClient OrdersApi
+@inject ILogger<OrderDetails> Logger
+
+<PageTitle>Заказ · CoffeeShop</PageTitle>
+
+@if (notFound)
+{
+    <h1>Заказ не найден</h1>
+    <p><a href="orders">К списку заказов</a></p>
+}
+else if (order is null)
+{
+    <p class="text-muted">@(error ?? "Загружаем заказ…")</p>
+}
+else
+{
+    <h1>Заказ для @order.CustomerName</h1>
+    <p class="text-muted small">
+        № <code>@order.Id</code> · оформлен в @order.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+    </p>
+
+    <OrderProgress Status="order.Status" />
+
+    <p class="status-text">
+        @switch (order.Status)
+        {
+            case OrderStatus.Pending:
+                <span>Заказ принят и ждёт свободного бариста…</span>
+                break;
+            case OrderStatus.Brewing:
+                <span>Бариста <code>@order.PreparedBy</code> готовит ваш заказ ☕</span>
+                break;
+            case OrderStatus.Ready:
+                <span>Готово! Заказ приготовил <code>@order.PreparedBy</code>
+                    за @(((order.ReadyAt ?? order.CreatedAt) - order.CreatedAt).TotalSeconds.ToString("N1")) с.</span>
+                break;
+        }
+    </p>
+
+    <table class="table table-sm order-lines">
+        <tbody>
+            @foreach (var line in order.Lines)
+            {
+                <tr>
+                    <td>@line.ItemName</td>
+                    <td class="text-end">× @line.Quantity</td>
+                    <td class="text-end">@((line.UnitPrice * line.Quantity).ToString("N0")) ₽</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2">Итого</th>
+                <th class="text-end">@order.Total.ToString("N0") ₽</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    @if (error is not null)
+    {
+        <div class="alert alert-warning">@error</div>
+    }
+
+    <div class="aspire-hint">
+        <strong>Под капотом:</strong> страница раз в секунду опрашивает <code>GET ordersapi/orders/{id}</code>.
+        Статус меняет BaristaWorker: он шлёт сообщения в очередь <code>orders.status</code>, а OrdersApi
+        записывает их в базу. В дашборде открой <em>Structured logs</em> и отфильтруй по <code>OrderId</code>.
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private OrderDto? order;
+    private bool notFound;
+    private string? error;
+    private readonly CancellationTokenSource cts = new();
+
+    protected override Task OnParametersSetAsync() => RefreshAsync();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // OnAfterRender вызывается только в интерактивном режиме (не при пререндеринге),
+        // поэтому опрос запускается один раз — когда страница "ожила" в браузере.
+        if (firstRender)
+        {
+            _ = PollAsync();
+        }
+    }
+
+    private async Task PollAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (order?.Status != OrderStatus.Ready && !notFound && await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await RefreshAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Пользователь ушёл со страницы.
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            var fresh = await OrdersApi.GetOrderAsync(Id, cts.Token);
+            notFound = fresh is null;
+            order = fresh ?? order;
+            error = null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Logger.LogWarning(ex, "Не удалось обновить заказ {OrderId}", Id);
+            error = "Сервис заказов временно недоступен, пробуем снова…";
+        }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
+    }
+}

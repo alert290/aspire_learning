@@ -1,0 +1,14 @@
+<span class="badge status-badge status-@Status.ToString().ToLowerInvariant()">@Text</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public OrderStatus Status { get; set; }
+
+    private string Text => Status switch
+    {
+        OrderStatus.Pending => "Принят",
+        OrderStatus.Brewing => "Готовится",
+        OrderStatus.Ready => "Готов",
+        _ => Status.ToString()
+    };
+}

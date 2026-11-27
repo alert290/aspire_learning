@@ -424,3 +424,6 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# CoffeeShop: артефакты `aspire publish -o artifacts/...`
+artifacts/

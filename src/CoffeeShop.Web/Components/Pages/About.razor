@@ -1,0 +1,50 @@
+@page "/about"
+
+<PageTitle>Как это устроено · CoffeeShop</PageTitle>
+
+<h1>Как это устроено</h1>
+
+<p class="lead">
+    CoffeeShop — учебное распределённое приложение. Его «дирижёр» — <strong>.NET Aspire AppHost</strong>:
+    одна команда <code>aspire run</code> поднимает контейнеры, запускает сервисы в правильном порядке,
+    связывает их между собой и собирает всю телеметрию в дашборд.
+</p>
+
+<div class="arch">
+    <div class="arch-row">
+        <div class="arch-box web">🌐 web<small>Blazor Server</small></div>
+    </div>
+    <div class="arch-arrows">↓ HTTP (service discovery) ↓</div>
+    <div class="arch-row">
+        <div class="arch-box api">📋 menuapi ×2<small>Minimal API</small></div>
+        <div class="arch-box api">🧾 ordersapi<small>Minimal API</small></div>
+        <div class="arch-box worker">☕ barista ×2<small>Worker Service</small></div>
+    </div>
+    <div class="arch-arrows">↓ интеграции Aspire ↓</div>
+    <div class="arch-row">
+        <div class="arch-box infra">🐘 postgres<small>menudb · ordersdb</small></div>
+        <div class="arch-box infra">🟥 cache<small>Redis</small></div>
+        <div class="arch-box infra">🐇 messaging<small>RabbitMQ</small></div>
+    </div>
+    <div class="arch-note">🛠 migrations — применяет миграции и завершается; все сервисы с базой ждут его (<code>WaitForCompletion</code>).</div>
+</div>
+
+<h2 class="h4 mt-4">Что попробовать в дашборде Aspire</h2>
+<ol class="try-list">
+    <li><strong>Resources</strong> — посмотри на граф зависимостей (вид Graph), состояния и health checks.
+        Останови <code>cache</code> (кнопка ⏹) и обнови меню: health check <code>menuapi</code> станет Unhealthy.</li>
+    <li><strong>Команды ресурсов</strong> — в меню «…» у <code>menuapi</code> есть «Сбросить кэш меню» и
+        «Вкл/выкл сбои», у <code>ordersapi</code> — «Час пик: 5 заказов».</li>
+    <li><strong>Traces</strong> — оформи заказ и найди трейс <code>POST /orders</code>: в нём видны вызов
+        <code>menuapi</code>, SQL-запросы, публикация в RabbitMQ и спан <code>Brew order</code> у бариста.</li>
+    <li><strong>Resilience</strong> — включи «сбои» на <code>menuapi</code> и пообновляй меню: в трейсах видно
+        повторные попытки HttpClient, а пользователь ошибок почти не замечает.</li>
+    <li><strong>Structured logs</strong> — отфильтруй по <code>OrderId</code> и проследи заказ через все сервисы.</li>
+    <li><strong>Metrics</strong> — у <code>ordersapi</code> найди <code>CoffeeShop.Orders</code>:
+        <code>coffeeshop.orders.placed</code>, <code>coffeeshop.items.ordered</code> (с тегом <code>item</code>) и др.</li>
+    <li><strong>Admin-UI</strong> — ссылки pgAdmin, Redis Insight и RabbitMQ Management есть прямо в дашборде.</li>
+</ol>
+
+<p class="mt-4">
+    Подробные уроки лежат в папке <code>docs/</code> репозитория — начни с <code>docs/00-introduction.md</code>.
+</p>

@@ -1,0 +1,51 @@
+﻿@implements IDisposable
+@inject CartState Cart
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">☕ CoffeeShop</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Меню навигации" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="nav-emoji" aria-hidden="true">📋</span> Меню
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cart">
+                <span class="nav-emoji" aria-hidden="true">🛒</span> Корзина
+                @if (Cart.Count > 0)
+                {
+                    <span class="badge rounded-pill cart-badge ms-2">@Cart.Count</span>
+                }
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="orders">
+                <span class="nav-emoji" aria-hidden="true">🧾</span> Заказы
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="about">
+                <span class="nav-emoji" aria-hidden="true">🧭</span> Как это устроено
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    // Подписываемся на изменения корзины, чтобы счётчик обновлялся без перезагрузки.
+    protected override void OnInitialized() => Cart.Changed += OnCartChanged;
+
+    private void OnCartChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Cart.Changed -= OnCartChanged;
+}

@@ -1,0 +1,108 @@
+@page "/cart"
+@inject CartState Cart
+@inject OrdersApiClient OrdersApi
+@inject NavigationManager Navigation
+@inject ILogger<CartPage> Logger
+
+<PageTitle>Корзина · CoffeeShop</PageTitle>
+
+<h1>Корзина</h1>
+
+@if (Cart.Count == 0)
+{
+    <p class="text-muted">Корзина пуста. <a href="">Выберите что-нибудь в меню</a> ☕</p>
+}
+else
+{
+    <table class="table align-middle cart-table">
+        <thead>
+            <tr>
+                <th>Позиция</th>
+                <th class="text-center">Количество</th>
+                <th class="text-end">Цена</th>
+                <th class="text-end">Сумма</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var line in Cart.Lines)
+            {
+                <tr>
+                    <td>@line.Item.Emoji @line.Item.Name</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-secondary" @onclick="() => Cart.Decrease(line.Item.Id)" aria-label="Уменьшить">−</button>
+                            <span class="btn btn-light disabled qty">@line.Quantity</span>
+                            <button class="btn btn-outline-secondary" @onclick="() => Cart.Add(line.Item)" aria-label="Увеличить">+</button>
+                        </div>
+                    </td>
+                    <td class="text-end">@line.Item.Price.ToString("N0") ₽</td>
+                    <td class="text-end">@((line.Item.Price * line.Quantity).ToString("N0")) ₽</td>
+                    <td class="text-end">
+                        <button class="btn btn-link btn-sm text-danger" @onclick="() => Cart.Remove(line.Item.Id)">Убрать</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">Итого</th>
+                <th class="text-end">@Cart.Total.ToString("N0") ₽</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="checkout">
+        <label class="form-label" for="customerName">Как вас зовут?</label>
+        <input id="customerName" class="form-control" maxlength="100" placeholder="Бариста позовёт вас по имени"
+               @bind="Cart.CustomerName" @bind:event="oninput" />
+
+        @if (error is not null)
+        {
+            <div class="alert alert-danger mt-3 mb-0">@error</div>
+        }
+
+        <button class="btn btn-coffee btn-lg mt-3"
+                disabled="@(submitting || string.IsNullOrWhiteSpace(Cart.CustomerName))"
+                @onclick="PlaceOrderAsync">
+            @(submitting ? "Отправляем заказ…" : $"Оформить заказ на {Cart.Total:N0} ₽")
+        </button>
+    </div>
+
+    <div class="aspire-hint">
+        <strong>Что произойдёт:</strong> Web → <code>POST ordersapi/orders</code> → OrdersApi спросит цены у
+        <code>menuapi</code>, сохранит заказ в <code>ordersdb</code> и отправит сообщение в RabbitMQ. Один из бариста
+        заберёт его из очереди. Весь путь — один трейс во вкладке <em>Traces</em> дашборда.
+    </div>
+}
+
+@code {
+    private bool submitting;
+    private string? error;
+
+    private async Task PlaceOrderAsync()
+    {
+        submitting = true;
+        error = null;
+        try
+        {
+            var order = await OrdersApi.PlaceOrderAsync(Cart.ToRequest());
+            Cart.Clear();
+            Navigation.NavigateTo($"orders/{order.Id}");
+        }
+        catch (OrderValidationException ex)
+        {
+            error = ex.Message;
+        }
+        catch (Exception ex) // сеть, таймаут, 5xx после всех ретраев…
+        {
+            Logger.LogError(ex, "Не удалось оформить заказ");
+            error = "Не получилось связаться с сервисом заказов. Загляни в дашборд Aspire: что с ресурсом ordersapi?";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

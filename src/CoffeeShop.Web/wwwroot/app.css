@@ -1,0 +1,308 @@
+/* =========================================================================
+   CoffeeShop — оформление. Чистый CSS поверх Bootstrap, к Aspire не относится.
+   ========================================================================= */
+
+:root {
+    --coffee-dark: #2f1d14;
+    --coffee: #6f4e37;
+    --coffee-light: #a47551;
+    --cream: #f7efe6;
+    --cream-dark: #eadbc8;
+    --accent: #c8813a;
+    --ink: #2b2420;
+}
+
+html, body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: #fffdfa;
+}
+
+a, .btn-link {
+    color: var(--coffee);
+}
+
+h1 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+h1:focus {
+    outline: none;
+}
+
+.content {
+    padding-top: 1.25rem;
+    padding-bottom: 3rem;
+    max-width: 1100px;
+}
+
+/* ---------- Кнопки ---------- */
+.btn-coffee {
+    color: #fff;
+    background-color: var(--coffee);
+    border-color: var(--coffee);
+}
+
+.btn-coffee:hover, .btn-coffee:focus {
+    color: #fff;
+    background-color: var(--coffee-dark);
+    border-color: var(--coffee-dark);
+}
+
+.btn-coffee:disabled {
+    color: #fff;
+    background-color: var(--coffee-light);
+    border-color: var(--coffee-light);
+}
+
+.btn-outline-coffee {
+    color: var(--coffee);
+    border-color: var(--coffee-light);
+}
+
+.btn-outline-coffee:hover {
+    color: #fff;
+    background-color: var(--coffee);
+}
+
+.btn:focus, .btn:active:focus, .form-control:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(200, 129, 58, 0.55);
+}
+
+/* ---------- Меню ---------- */
+.page-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.category-title {
+    font-size: 1.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--coffee-light);
+    margin: 1.5rem 0 0.75rem;
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1rem;
+}
+
+.menu-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 14px;
+    padding: 1rem;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.menu-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(47, 29, 20, 0.08);
+}
+
+.menu-emoji {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.menu-body {
+    flex: 1;
+}
+
+.menu-body h3 {
+    font-size: 1.1rem;
+    margin: 0.6rem 0 0.25rem;
+}
+
+.menu-body p {
+    font-size: 0.88rem;
+    color: #6b5d54;
+    margin-bottom: 0.75rem;
+}
+
+.menu-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.price {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+/* ---------- Подсказки "под капотом" ---------- */
+.aspire-hint {
+    margin-top: 2rem;
+    padding: 0.85rem 1rem;
+    border-left: 4px solid var(--accent);
+    background: #fff6ec;
+    border-radius: 0 10px 10px 0;
+    font-size: 0.9rem;
+}
+
+code {
+    color: #8a3b12;
+}
+
+/* ---------- Корзина ---------- */
+.cart-table .qty {
+    min-width: 2.5rem;
+    opacity: 1;
+}
+
+.checkout {
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Прогресс заказа ---------- */
+.order-progress {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    gap: 0.5rem;
+    max-width: 560px;
+}
+
+.order-progress .step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 12px;
+    background: #f1ece7;
+    color: #9a8c82;
+    transition: background 0.3s ease;
+}
+
+.order-progress .step.done {
+    background: #e3f1e4;
+    color: #2f6b3a;
+}
+
+.order-progress .step.current {
+    background: var(--cream-dark);
+    color: var(--coffee-dark);
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.step-emoji {
+    font-size: 1.6rem;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+@keyframes pulse {
+    50% { box-shadow: 0 0 0 6px rgba(200, 129, 58, 0.15); }
+}
+
+.status-text {
+    font-size: 1.05rem;
+}
+
+.order-lines {
+    max-width: 560px;
+}
+
+/* ---------- Статусы ---------- */
+.status-badge {
+    font-weight: 600;
+}
+
+.status-pending { background: #e9e4df; color: #5b5048; }
+.status-brewing { background: #f8e3c8; color: #8a4f12; }
+.status-ready   { background: #d9efdc; color: #2f6b3a; }
+
+/* ---------- Страница "Как это устроено" ---------- */
+.arch {
+    background: var(--cream);
+    border: 1px solid var(--cream-dark);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+}
+
+.arch-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.arch-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 150px;
+    padding: 0.6rem 0.9rem;
+    border-radius: 10px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid var(--cream-dark);
+}
+
+.arch-box small {
+    font-weight: 400;
+    color: #7d6f66;
+}
+
+.arch-box.web { border-color: #7aa6d8; }
+.arch-box.api { border-color: var(--coffee-light); }
+.arch-box.worker { border-color: var(--accent); }
+.arch-box.infra { border-color: #9cb79f; }
+
+.arch-arrows {
+    text-align: center;
+    color: #9a8c82;
+    font-size: 0.85rem;
+    margin: 0.5rem 0;
+}
+
+.arch-note {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.88rem;
+}
+
+.try-list li {
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Шаблонные стили Blazor ---------- */
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid #e50000;
+}
+
+.validation-message {
+    color: #e50000;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    padding: 1rem 1rem 1rem 3.7rem;
+    color: white;
+}
+
+.blazor-error-boundary::after {
+    content: "Произошла ошибка."
+}

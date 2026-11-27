@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoffeeShop.AppHost/CoffeeShop.AppHost.csproj" />
+    <Project Path="src/CoffeeShop.BaristaWorker/CoffeeShop.BaristaWorker.csproj" />
+    <Project Path="src/CoffeeShop.Contracts/CoffeeShop.Contracts.csproj" />
+    <Project Path="src/CoffeeShop.Data/CoffeeShop.Data.csproj" />
+    <Project Path="src/CoffeeShop.MenuApi/CoffeeShop.MenuApi.csproj" />
+    <Project Path="src/CoffeeShop.MigrationService/CoffeeShop.MigrationService.csproj" />
+    <Project Path="src/CoffeeShop.OrdersApi/CoffeeShop.OrdersApi.csproj" />
+    <Project Path="src/CoffeeShop.ServiceDefaults/CoffeeShop.ServiceDefaults.csproj" />
+    <Project Path="src/CoffeeShop.Web/CoffeeShop.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CoffeeShop.Tests/CoffeeShop.Tests.csproj" />
+  </Folder>
+</Solution>

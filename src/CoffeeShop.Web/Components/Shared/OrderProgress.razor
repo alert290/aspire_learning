@@ -1,0 +1,24 @@
+@* Индикатор прогресса заказа: Принят → Готовится → Готов *@
+
+<ol class="order-progress">
+    @foreach (var (status, title, emoji) in Steps)
+    {
+        var state = status < Status ? "done" : status == Status ? (Status == OrderStatus.Ready ? "done" : "current") : "todo";
+        <li class="step @state">
+            <span class="step-emoji">@emoji</span>
+            <span class="step-title">@title</span>
+        </li>
+    }
+</ol>
+
+@code {
+    [Parameter, EditorRequired]
+    public OrderStatus Status { get; set; }
+
+    private static readonly (OrderStatus Status, string Title, string Emoji)[] Steps =
+    [
+        (OrderStatus.Pending, "Принят", "🧾"),
+        (OrderStatus.Brewing, "Готовится", "☕"),
+        (OrderStatus.Ready, "Готов", "✅")
+    ];
+}
